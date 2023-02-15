@@ -4,12 +4,18 @@ import { imagesWithQuery } from '../Api/Api';
 import { SearchBar } from './SearchBar/SearchBar.jsx';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { LoaderSpinner } from './Loader/Loader.jsx';
+import { ButtonLoadMore } from './Button/Button';
+import { Modal } from './Modal/Modal';
 export class App extends React.PureComponent {
   state = {
     images: [],
     isLoading: false,
     error: null,
     searchQuery: '',
+    page: 1,
+    modalOpen: false,
+    largeImageURL: '',
+    alt: '',
   };
 
   componentDidMount() {
@@ -18,13 +24,25 @@ export class App extends React.PureComponent {
     }
   }
 
-  handleImagesRequest = async searchQuery => {
+  handleImagesRequest = async (searchQuery, page = 1) => {
     this.setState({ isLoading: true });
-
     try {
-      const images = await imagesWithQuery(searchQuery);
-      this.setState({ images: images });
-      console.log(this.state.images);
+      const foundedImages = await imagesWithQuery(searchQuery, page);
+      if (searchQuery === this.state.searchQuery) {
+        this.setState({
+          images: [...this.state.images, ...foundedImages],
+          // searchQuery: searchQuery,
+          // page: page + 1,
+        });
+        console.log(this.state.searchQuery, searchQuery);
+      } else {
+        this.setState({
+          images: [...this.state.images],
+          searchQuery: searchQuery,
+          page: 1,
+        });
+        console.log(this.state.images);
+      }
     } catch (error) {
       this.setState({ error: error.message });
       console.log(error);
@@ -32,30 +50,47 @@ export class App extends React.PureComponent {
       this.setState({ isLoading: false });
     }
   };
-  // handleInput = evt => {
-  //   this.setState({
-  //     searchQuery: evt.target.value,
-  //   });
-  // };
+
   componentDidUpdate(_prevProps, prevState) {
-    if (prevState.searchQuery !== this.state.searchQuery) {
+    if (
+      prevState.searchQuery !== this.state.searchQuery &&
+      this.state.searchQuery.length >= 2
+    ) {
       this.handleImagesRequest(this.state.searchQuery);
-      console.log(this.state.searchQuery);
+      this.setState({ page: 2 });
     }
   }
 
+  loadMore = () => {
+    const { page, searchQuery, images } = this.state;
+    this.setState({ page: page + 1 });
+    this.handleImagesRequest(searchQuery, page);
+    console.log(images);
+  };
+
+  modal = (value, imageURL, tag) => {
+    this.setState({ modalOpen: value, largeImageURL: imageURL, alt: tag });
+  };
+
   render() {
-    const { images, isLoading, error, searchQuery } = this.state;
-    console.log(searchQuery);
+    const { images, isLoading, error, modalOpen, largeImageURL, alt } =
+      this.state;
     return (
       <div className={css.app}>
-        {/* <input type="text" value={searchQuery} onChange={this.handleInput} /> */}
         <SearchBar onSubmitSearch={this.handleImagesRequest} />
         {isLoading && <LoaderSpinner />}
         {error && !isLoading && <div> {error}</div>}
         {!isLoading && images.length > 0 ? (
-          <ImageGallery images={images} />
+          <ImageGallery images={images} modal={this.modal} />
         ) : null}
+        {
+          images.length > 0 && <ButtonLoadMore onClick={this.loadMore} />
+          //  && (<ImageGallery images={images} modal={this.modal} />)
+        }
+
+        {modalOpen && (
+          <Modal onClose={this.modal} url={largeImageURL} alt={alt} />
+        )}
       </div>
     );
   }

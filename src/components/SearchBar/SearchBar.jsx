@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import propTypes from 'prop-types';
 import css from './SearchBar.module.css';
 
 export class SearchBar extends Component {
@@ -13,29 +14,30 @@ export class SearchBar extends Component {
   handelSubimt = event => {
     event.preventDefault();
     this.props.onSubmitSearch(this.state.searchQuery);
-    // this.reset();
+    this.reset();
+  };
+  onKeyDown = event => {
+    if (event.key === 'Enter') {
+      this.handelSubimt(event);
+    }
   };
 
-  // reset() {
-  //   this.setState({ searchQuery: '' });
-  // }
+  reset() {
+    this.setState({ searchQuery: '' });
+  }
 
   render() {
-    console.log(this.state.searchQuery);
     return (
       <header className={css.searchBar}>
-        <form className={css.searchForm}>
-          <button
-            type="submit"
-            className={css.searchFormButton}
-            onSubmit={this.handelSubimt}
-          >
+        <form className={css.searchForm} onSubmit={this.handelSubimt}>
+          <button type="submit" className={css.searchFormButton}>
             <span className={css.searchFormButtonLabel}>Search</span>
           </button>
 
           <input
             className={css.searchFormInput}
             onChange={this.handelChange}
+            onKeyDown={this.onKeyDown}
             type="text"
             autoComplete="off"
             autoFocus
@@ -46,3 +48,7 @@ export class SearchBar extends Component {
     );
   }
 }
+
+SearchBar.propTypes = {
+  onSubmitSearch: propTypes.func,
+};
