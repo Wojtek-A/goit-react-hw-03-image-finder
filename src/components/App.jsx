@@ -19,29 +19,29 @@ export class App extends React.PureComponent {
   };
 
   componentDidMount() {
-    if (this.state.searchQuery < 0) {
+    if (this.state.searchQuery.length > 0) {
       this.handleImagesRequest();
     }
   }
 
-  handleImagesRequest = async (searchQuery, page = 1) => {
+  handleImagesRequest = async (searchQuery, page) => {
     this.setState({ isLoading: true });
     try {
       const foundedImages = await imagesWithQuery(searchQuery, page);
-      if (searchQuery === this.state.searchQuery) {
+      console.log([...foundedImages]);
+      if (searchQuery === this.state.searchQuery && page > 1) {
         this.setState({
           images: [...this.state.images, ...foundedImages],
-          // searchQuery: searchQuery,
-          // page: page + 1,
+          searchQuery: searchQuery,
         });
         console.log(this.state.searchQuery, searchQuery);
-      } else {
+      } else if (searchQuery !== this.state.searchQuery) {
         this.setState({
-          images: [...this.state.images],
+          images: foundedImages,
           searchQuery: searchQuery,
-          page: 1,
+          page: 2,
         });
-        console.log(this.state.images);
+        console.log(this.state.searchQuery);
       }
     } catch (error) {
       this.setState({ error: error.message });
